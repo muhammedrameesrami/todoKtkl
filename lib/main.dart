@@ -7,6 +7,8 @@ import 'package:todoapp/screens/settingsscreen.dart';
 import 'package:todoapp/screens/sportpage.dart';
 
 void main() {
-  runApp((MaterialApp(home:Loginpage() ,)));
+  runApp((MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: Loginpage(),
+  )));
 }
-
