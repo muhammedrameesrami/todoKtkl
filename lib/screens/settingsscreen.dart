@@ -4,14 +4,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-class Settings extends StatefulWidget {
-  const Settings({super.key});
+class Settingspage extends StatefulWidget {
+  const Settingspage({super.key});
 
   @override
-  State<Settings> createState() => _SettingsState();
+  State<Settingspage> createState() => _SettingspageState();
 }
 
-class _SettingsState extends State<Settings> {
+class _SettingspageState extends State<Settingspage> {
   File? _image;
 
   final ImagePicker _picker = ImagePicker();

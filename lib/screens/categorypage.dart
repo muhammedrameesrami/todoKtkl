@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:todoapp/cbservices/cbservices.dart';
 import 'package:todoapp/controller/todoctrler.dart';
@@ -158,11 +159,20 @@ class _CategoryState extends State<Category> {
                         if (selectedIcon != null &&
                             titleController.text.isNotEmpty &&
                             tasksController.text.isNotEmpty) {
-                          await dbService.addvalues(
-                            name: titleController.text,
-                            icon: iconNames[iconList.indexOf(selectedIcon!)],
-                            details: tasksController.text,
-                          );
+                          String taskId = FirebaseFirestore.instance.collection('task').doc().id;
+
+                          // Add data to Firestore
+                          await FirebaseFirestore.instance.collection('task').doc(taskId).set({
+                            'id': taskId, // Unique ID for the task
+                            'title': titleController.text, // Title from the input field
+                            'icon': iconNames[iconList.indexOf(selectedIcon!)], // Selected icon name
+                            'taskCount': int.parse(tasksController.text), // Task count (converted to int)
+                          });
+                          // await dbService.addvalues(
+                          //   name: titleController.text,
+                          //   icon: iconNames[iconList.indexOf(selectedIcon!)],
+                          //   details: tasksController.text,
+                          // );
                           titleController.clear();
                           tasksController.clear();
                           setState(() {
@@ -195,7 +205,7 @@ class _CategoryState extends State<Category> {
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: GestureDetector(onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => Settings(),));
+            Navigator.push(context, MaterialPageRoute(builder: (context) => Settingspage(),));
           },
             child: CircleAvatar(
               backgroundImage: AssetImage('asset/images/ney.jpg'),
@@ -260,120 +270,145 @@ class _CategoryState extends State<Category> {
             ),
           ),
           Expanded(
-            child: GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 1.5,
-              ),
-              itemCount: categories.length + 1, // Add 1 for the "Add" icon
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  // Always show the "Add" button at the first index
-                  return Container(
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
-                          spreadRadius: 3,
-                          blurRadius: 5,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.add_circle,
-                        size: 30,
-                        color: Colors.blue,
-                      ),
-                      onPressed: _showAddPopup,
-                    ),
-                  );
+            child: StreamBuilder<QuerySnapshot>(
+              stream:FirebaseFirestore.instance.collection('task').snapshots(),
+              builder: (context,snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
                 }
 
-                final category =
-                    categories[index - 1]; // Adjust index for categories
-                IconData iconData = Icons.help; // Default icon
-                try {
-                  iconData =
-                      getIconByName(category['icon'] ?? ''); // Get icon by name
-                } catch (e) {
-                  // Handle exception if icon is not valid
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error fetching data'));
                 }
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => Ctegorydetailscreen(
-                            details: category['details'],
-                            icon: getIconByName(category['icon']),
-                            name: category['name'],
-                          ),
-                        ));
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
-                          spreadRadius: 3,
-                          blurRadius: 5,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                iconData,
-                                size: 30,
-                                color: Colors.black,
-                              ),
-                              SizedBox(height: 10),
-                              Text(
-                                category['name'] ?? 'No Title',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 5),
-                              Text(
-                                '${category['details'] ?? '0'} task',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: IconButton(
-                            icon: Icon(Icons.more_vert),
-                            onPressed: () {
-                              // Handle action when the more icon is tapped
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(child: Text('No tasks found'));
+                }
+
+                final List<DocumentSnapshot> tasks = snapshot.data!.docs;
+
+                return GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 1.5,
                   ),
+                  itemCount: tasks.length + 1,// categories.length + 1 // Add 1 for the "Add" icon
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      // Always show the "Add" button at the first index
+                      return Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 3,
+                              blurRadius: 5,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.add_circle,
+                            size: 30,
+                            color: Colors.blue,
+                          ),
+                          onPressed: _showAddPopup,
+                        ),
+                      );
+                    }
+
+                    final categoryData = tasks[index - 1];
+                    final String title = categoryData['title'] ?? 'Untitled';
+                    final int taskCount = categoryData['taskCount'] ?? 0;
+                    final IconData icon =
+                    getIconByName(categoryData['icon'] ?? 'help');
+                       //hive
+                    // final category =
+                    //     categories[index - 1]; // Adjust index for categories
+                    // IconData iconData = Icons.help; // Default icon
+                    // try {
+                    //   iconData =
+                    //       getIconByName(category['icon'] ?? ''); // Get icon by name
+                    // } catch (e) {
+                    //   // Handle exception if icon is not valid
+                    // }
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => Ctegorydetailscreen(
+                                taskId: categoryData.id, // Pass the task title
+                                icon: icon, // Pass the selected icon
+                                name: 'nam',details: 'sds',
+                              ),
+                            ));
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 3,
+                              blurRadius: 5,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          children: [
+                            Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    icon,
+                                    size: 30,
+                                    color: Colors.black,
+                                  ),
+                                  SizedBox(height: 10),
+                                  Text(title,
+                                    // category['name'] ?? 'No Title',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 5),
+                                  Text('$taskCount tasks',
+                                    // '${category['details'] ?? '0'} task',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: IconButton(
+                                icon: Icon(Icons.more_vert),
+                                onPressed: () {
+                                  // Handle action when the more icon is tapped
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 );
-              },
+              }
             ),
           ),
         ],
