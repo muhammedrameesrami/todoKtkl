@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:todoapp/blocs/authbloc/auth_bloc.dart';
+import 'package:todoapp/blocs/comonCubit/currentuser_cubit.dart';
 import 'package:todoapp/core/snackbar.dart';
 import 'package:todoapp/screens/categorypage.dart';
 import 'package:todoapp/screens/createaccount.dart';
@@ -19,6 +20,8 @@ class _LoginpageState extends State<Loginpage> {
 
   @override
   Widget build(BuildContext context) {
+    // context.watch<CurrentuserCubit>().state;
+    // print(  context.watch<CurrentuserCubit>().state?.id);
     return Scaffold(
       backgroundColor: Colors.white,
       body: Padding(
@@ -133,9 +136,11 @@ class _LoginpageState extends State<Loginpage> {
                   child: BlocConsumer<AuthBloc, AuthState>(
                     listener: (context, state) {
                      if(state is AuthSuccess){
+                       context.read<CurrentuserCubit>().updateUser(usermodel: state.model);
                        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => Category(),), (route) => false,);
                      }
                      if(state is AuthFailure){
+                       print("failure");
                        showSnackBarMessage(message: 'error on login ', context: context);
                      }
                     },
@@ -143,6 +148,7 @@ class _LoginpageState extends State<Loginpage> {
                       if(state is AuthLoading){
                         return Center(child: CircularProgressIndicator(),);
                       }
+
                       return ElevatedButton(
                         onPressed: () {
                           print('111111111111');

@@ -1,6 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
+import 'package:path/path.dart';
+import 'package:path/path.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:todoapp/blocs/comonCubit/currentuser_cubit.dart';
 
 import '../../controller/authController.dart';
 import '../../models/userModel.dart';
@@ -20,8 +23,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try{
       final res=await _authController.login(email: event.email, password: event.password);
       res.fold((l) => emit(AuthFailure(error: l.message)), (r)  {
-
-
         return emit(AuthSuccess(model: r));
       },);
     }catch (e){

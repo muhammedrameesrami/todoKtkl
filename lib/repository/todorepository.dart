@@ -28,8 +28,9 @@ class Todorepository {
     }
   }
 
-  Future<Either<Failure, String>> updateTask(
-      {required String subtaskId, }) async {
+  Future<Either<Failure, String>> updateTask({
+    required String subtaskId,
+  }) async {
     try {
       await FirebaseFirestore.instance
           .collection('subtasks')

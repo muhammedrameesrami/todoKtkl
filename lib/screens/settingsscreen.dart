@@ -2,7 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:todoapp/blocs/comonCubit/currentuser_cubit.dart';
+import 'package:todoapp/models/userModel.dart';
+import 'package:todoapp/screens/login.dart';
 
 class Settingspage extends StatefulWidget {
   const Settingspage({super.key});
@@ -30,25 +35,26 @@ class _SettingspageState extends State<Settingspage> {
   void _showImageSourceSelection() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Select Image Source'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              _pickImage(ImageSource.camera);
-              Navigator.pop(context);
-            },
-            child: Text('Camera'),
+      builder: (context) =>
+          AlertDialog(
+            title: Text('Select Image Source'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  _pickImage(ImageSource.camera);
+                  Navigator.pop(context);
+                },
+                child: Text('Camera'),
+              ),
+              TextButton(
+                onPressed: () {
+                  _pickImage(ImageSource.gallery);
+                  Navigator.pop(context);
+                },
+                child: Text('Gallery'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              _pickImage(ImageSource.gallery);
-              Navigator.pop(context);
-            },
-            child: Text('Gallery'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -74,8 +80,8 @@ class _SettingspageState extends State<Settingspage> {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundImage: _image != null 
-                      ? FileImage(_image!) 
+                  backgroundImage: _image != null
+                      ? FileImage(_image!)
                       : AssetImage('asset/images/ney.jpg') as ImageProvider,
                   backgroundColor: Colors.blue,
                   radius: 25,
@@ -83,17 +89,21 @@ class _SettingspageState extends State<Settingspage> {
                 SizedBox(
                   width: 30,
                 ),
-                Column(
-                  children: [
-                    Text(
-                      'Malak Idrisi',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      'Rabat Morocco',
-                      style: TextStyle(fontSize: 10),
-                    ),
-                  ],
+                BlocBuilder<CurrentuserCubit, UserModel?>(
+                  builder: (context, state) {
+                    return Column(
+                      children: [
+                        Text(
+                          state!.name,
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          state.email,
+                          style: TextStyle(fontSize: 10),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 Spacer(),
                 CircleAvatar(
@@ -123,7 +133,7 @@ class _SettingspageState extends State<Settingspage> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: IconButton(
-                    onPressed: () {}, 
+                    onPressed: () {},
                     icon: Icon(Icons.notifications),
                   ),
                 ),
@@ -138,7 +148,30 @@ class _SettingspageState extends State<Settingspage> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: IconButton(
-                    onPressed: () {}, 
+                    onPressed: () async {
+                      SharedPreferences prefrence = await SharedPreferences
+                          .getInstance();
+                      prefrence.remove("email");
+                      Navigator.pushAndRemoveUntil(context,
+                        MaterialPageRoute(builder: (context) => Loginpage(),), (
+                            route) =>
+                        false,);
+                    },
+                    icon: Icon(Icons.logout),
+                  ),
+                ),
+                Text(
+                  'Logout',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                )
+              ],
+            ),
+            Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: IconButton(
+                    onPressed: () {},
                     icon: Icon(Icons.settings),
                   ),
                 ),
@@ -153,7 +186,7 @@ class _SettingspageState extends State<Settingspage> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: IconButton(
-                    onPressed: () {}, 
+                    onPressed: () {},
                     icon: Icon(Icons.person),
                   ),
                 ),
@@ -168,7 +201,7 @@ class _SettingspageState extends State<Settingspage> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: IconButton(
-                    onPressed: () {}, 
+                    onPressed: () {},
                     icon: Icon(Icons.error),
                   ),
                 ),
